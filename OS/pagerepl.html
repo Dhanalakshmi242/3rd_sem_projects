@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Page Replacement Simulator</title>
+
+<style>
+body {
+    background: #0b0f0c;
+    color: #a6ff00;
+    font-family: Arial, sans-serif;
+}
+.container {
+    width: 900px;
+    margin: auto;
+}
+h1 {
+    text-align: center;
+    color: #76ff03;
+    text-shadow: 0 0 12px #76ff03;
+}
+input, select, button {
+    background: #111;
+    color: #a6ff00;
+    border: 1px solid #76ff03;
+    padding: 8px;
+    margin-top: 10px;
+}
+button {
+    cursor: pointer;
+}
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+td, th {
+    border: 1px solid #76ff03;
+    padding: 6px;
+    text-align: center;
+}
+.fault {
+    color: red;
+    font-weight: bold;
+}
+.hit {
+    color: #76ff03;
+}
+.bigx {
+    font-size: 28px;
+    font-weight: bold;
+    color: #76ff03;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h1>Page Replacement Algorithm Simulator</h1>
+
+<label>Page Reference String</label>
+<input id="pages" placeholder="7 0 1 2 0 3 0 4">
+
+<label>Number of Frames</label>
+<select id="frames">
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+</select>
+
+<label>Algorithm</label>
+<select id="algo">
+    <option value="FIFO">FIFO</option>
+    <option value="LRU">LRU</option>
+    <option value="OPT">Optimal</option>
+</select>
+
+<br>
+<button onclick="simulate()">Solve</button>
+
+<div id="output"></div>
+</div>
+
+<script>
+function simulate() {
+
+    let pages = document.getElementById("pages").value
+        .trim().split(/\s+/).map(Number);
+
+    let frameCount = parseInt(
+        document.getElementById("frames").value
+    );
+
+    let algo = document.getElementById("algo").value;
+
+    let frames = Array(frameCount).fill("-");
+    let history = [];
+    let fifoQueue = [];
+    let faults = 0;
+
+    for (let i = 0; i < pages.length; i++) {
+        let page = pages[i];
+        let status = "Hit";
+
+        if (!frames.includes(page)) {
+            faults++;
+            status = "Fault";
+
+            let index = frames.indexOf("-");
+
+            if (index === -1) {
+                if (algo === "FIFO") {
+                    index = fifoQueue.shift();
+                }
+                else if (algo === "LRU") {
+                    let least = Infinity;
+                    for (let j = 0; j < frameCount; j++) {
+                        let last = pages.lastIndexOf(frames[j], i - 1);
+                        if (last < least) {
+                            least = last;
+                            index = j;
+                        }
+                    }
+                }
+                else if (algo === "OPT") {
+                    let farthest = -1;
+                    for (let j = 0; j < frameCount; j++) {
+                        let next = pages.indexOf(frames[j], i + 1);
+                        if (next === -1) {
+                            index = j;
+                            break;
+                        }
+                        if (next > farthest) {
+                            farthest = next;
+                            index = j;
+                        }
+                    }
+                }
+            }
+
+            frames[index] = page;
+            if (algo === "FIFO") fifoQueue.push(index);
+        }
+
+        if (status === "Fault") {
+            history.push({
+                frames: [...frames],
+                status: status
+            });
+        } else {
+            history.push({
+                frames: null,   // mark HIT
+                status: status
+            });
+        }
+    }
+
+    let html = "<table><tr><th>Pages →</th>";
+    pages.forEach(p => html += `<th>${p}</th>`);
+    html += "</tr>";
+
+    for (let r = 0; r < frameCount; r++) {
+        html += "<tr><td></td>";
+
+        history.forEach(h => {
+            if (h.status === "Hit") {
+                if (r === 0) {
+                    html += `<td rowspan="${frameCount}" class="bigx">X</td>`;
+                }
+            } else {
+                html += `<td>${h.frames[r]}</td>`;
+            }
+        });
+
+        html += "</tr>";
+    }
+
+    html += "<tr><td>Status</td>";
+    history.forEach(h => {
+        html += `<td class="${h.status === 'Fault' ? 'fault' : 'hit'}">${h.status}</td>`;
+    });
+    html += "</tr></table>";
+
+    html += `<h3>Total Page Faults = ${faults}</h3>`;
+
+    document.getElementById("output").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
