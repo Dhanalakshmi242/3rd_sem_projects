@@ -1,0 +1,4 @@
+This repo is all about my 3rd sem projects of OS , DSA , JAVA.
+OS - CPU SCHEDULING ALGORITHM , PAGE REPLACEMENT ALGORITHM.
+DSA - STUDENT MANAGEMENT SYSTEM , INVENTORY MANAGEMENT SYSTEM
+GIT FOLDER - It's the output of the git lab exam.
